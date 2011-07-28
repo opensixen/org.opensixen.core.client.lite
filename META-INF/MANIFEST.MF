@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Opensixen core cliente Lite edition code
-Bundle-SymbolicName: org.opensixen.core.client.lite
+Bundle-SymbolicName: org.opensixen.core.client.lite;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.opensixen.core.client.lite.Activator
 Bundle-ActivationPolicy: lazy
