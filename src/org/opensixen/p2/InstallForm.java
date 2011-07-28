@@ -211,7 +211,7 @@ public class InstallForm extends CDialog {
 		
 		// Fill installed apps
 		installedAppsList.clear();
-		//installedAppsList.addAll(P2.get().getInstalledModel());
+		installedAppsList.addAll(P2.get().getInstalledModel());
 	}
 
 	
