@@ -63,6 +63,7 @@ package org.opensixen.p2;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -73,6 +74,7 @@ import java.util.Comparator;
 import java.util.Properties;
 
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -106,7 +108,7 @@ import ca.odell.glazedlists.swing.EventTableModel;
  *
  */
 public class InstallForm extends CDialog {
-
+	private static final long serialVersionUID = 1L;
 	private BasicEventList<IUnitModel> repoAppsList;
 	private BasicEventList<IUnitModel> installedAppsList;
 	private Properties ctx;
@@ -124,17 +126,14 @@ public class InstallForm extends CDialog {
 	
 	private CButton repositoryBtn;
 	private CButton updateBtn;
-	
-	//Paneles
-	
-	private JXTaskPane topPanel = new JXTaskPane();
-	
+		
 	
 	public InstallForm(Properties ctx)	{
 		this.ctx = ctx;
+		setTitle(Msg.translate(Env.getCtx(), "Manage Plugins"));
 		jbInit();
 		load();
-		//autoSize();
+		setMinimumSize(new Dimension(600, 400));
 		pack();
 	}
 	
@@ -142,12 +141,42 @@ public class InstallForm extends CDialog {
 	private void jbInit()	{
 		setLayout(new BorderLayout(10, 10));
 		
-		topPanel.setTitle(Msg.translate(Env.getCtx(), "Repositories"));
-		topPanel.setLayout(new GridBagLayout());
+		JTabbedPane tabbedPane = new JTabbedPane();
 		
-		add(topPanel, BorderLayout.NORTH);
-		
+		tabbedPane.addTab(Msg.translate(Env.getCtx(), "Installed Plugins"), generateInstalledSoftPanel());
+		tabbedPane.addTab(Msg.translate(Env.getCtx(), "Install new Plugins"), generateRepositoriesPanel());
+			
+		add(tabbedPane);
+	}
 
+	private CPanel generateInstalledSoftPanel()	{
+		CPanel panel = new CPanel();
+		panel.setLayout(new BorderLayout());
+		// Installed apps		
+		installedAppsList = new BasicEventList<IUnitModel>();
+		FilterList<IUnitModel> installedFilterList = new FilterList<IUnitModel>(installedAppsList);
+		EventTableModel<IUnitModel> installedTableModel = new  EventTableModel<IUnitModel>(installedFilterList, new IUnitTableFormat());
+		table = new JTable(installedTableModel);		
+		panel.add(new JScrollPane(table), BorderLayout.CENTER);
+		
+		CPanel btnPanel = new CPanel();
+		panel.add(btnPanel, BorderLayout.SOUTH);
+						
+		updateBtn = new CButton(Msg.getMsg(Env.getAD_Language(ctx), "Update"));
+		updateBtn.addActionListener(this);
+		btnPanel.add(updateBtn);
+		
+		return panel;
+	}
+	
+	private CPanel generateRepositoriesPanel()	{
+		CPanel panel = new CPanel();
+		panel.setLayout(new BorderLayout());
+
+		CPanel topPanel = new CPanel();
+		topPanel.setLayout(new GridBagLayout());
+		panel.add(topPanel, BorderLayout.NORTH);
+		
 		locationsCombo = new CComboBox(P2.get().getRepositories());
 		locationsCombo.addActionListener(this);
 		locationLabel.setText(Msg.translate(Env.getCtx(), "Repositories"));
@@ -162,17 +191,10 @@ public class InstallForm extends CDialog {
 
 		topPanel.add( repositoryBtn,new GridBagConstraints( 1,1,1,1,0.0,0.0,GridBagConstraints.CENTER,GridBagConstraints.NONE,new Insets( 10,1,2,100 ),0,0 ));
 
+		CPanel tablePanel = new CPanel();
+		panel.add(tablePanel, BorderLayout.CENTER);
+			
 		
-		CPanel treePanel = new CPanel();
-		add(treePanel, BorderLayout.CENTER);
-		
-		
-		// Installed apps
-		installedAppsList = new BasicEventList<IUnitModel>();
-		FilterList<IUnitModel> installedFilterList = new FilterList<IUnitModel>(installedAppsList);
-		EventTableModel<IUnitModel> installedTableModel = new  EventTableModel<IUnitModel>(installedFilterList, new IUnitTableFormat());
-		table = new JTable(installedTableModel);		
-		treePanel.add(new JScrollPane(table));
 		
 		
 		// Available iu
@@ -180,23 +202,20 @@ public class InstallForm extends CDialog {
 		FilterList<IUnitModel> repoFilterList = new FilterList<IUnitModel>(repoAppsList);
 		EventTableModel<IUnitModel> tepoTableModel = new  EventTableModel<IUnitModel>(repoFilterList, new IUnitTableFormat());
 		table = new JTable(tepoTableModel);		
-		treePanel.add(new JScrollPane(table));
+		tablePanel.add(new JScrollPane(table));
 		
 		
 		
 		CPanel btnPanel = new CPanel();
-		add(btnPanel, BorderLayout.SOUTH);
+		panel.add(btnPanel, BorderLayout.SOUTH);
 		
 		installBtn = new CButton(Msg.getMsg(Env.getAD_Language(ctx), "Install"));
 		installBtn.addActionListener(this);
 		btnPanel.add(installBtn);
 		
+		return panel;
 		
-		updateBtn = new CButton(Msg.getMsg(Env.getAD_Language(ctx), "Update"));
-		updateBtn.addActionListener(this);
-		btnPanel.add(updateBtn);
 	}
-
 
 	/**
 	 * Load table data
@@ -288,7 +307,7 @@ class IUnitTableFormat implements AdvancedTableFormat<IUnitModel>, WritableTable
 	 */
 	@Override
 	public int getColumnCount() {
-		return 3;
+		return 4;
 	}
 
 	/* (non-Javadoc)
@@ -300,9 +319,11 @@ class IUnitTableFormat implements AdvancedTableFormat<IUnitModel>, WritableTable
 		case 0:
 			return "";
 		case 1:
-			return "ID";
+			return "Name";
 		case 2:
-			return "Descripcion";
+			return "Description";
+		case 3:
+			return "Version";
 		default:
 			throw new RuntimeException("Imposible column index: " + column);
 		}
@@ -321,6 +342,8 @@ class IUnitTableFormat implements AdvancedTableFormat<IUnitModel>, WritableTable
 			return iunit.getName();
 		case 2:
 			return iunit.getDescription();
+		case 3:
+			return iunit.getVersion();
 		default:
 			throw new RuntimeException("Imposible column index: " + column);
 		}
@@ -338,6 +361,8 @@ class IUnitTableFormat implements AdvancedTableFormat<IUnitModel>, WritableTable
 		case 1:
 			return String.class;
 		case 2:
+			return String.class;
+		case 3: 
 			return String.class;
 		default:
 			throw new RuntimeException("Imposible column index: " + column);
